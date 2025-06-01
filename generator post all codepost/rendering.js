@@ -389,46 +389,33 @@ const titleL2 = data.title? data.title : data.titleAlternatif.romaji;
          
         
   } else if (data.sourceID === 'AniList') {
-   
-   function characters_va_html(character, showdatax) {
-    let showdata = showdatax;
-    let html = `
-      <div class="character">
-        <img src="${character.image}" alt="${character.name}" style="width: 100px; height: auto;" />
-        <p><strong>Character:</strong> ${character.name}</p>
-        <p><strong>Role:</strong> ${character.role}</p>`;
-        
-        
-   if (showdata.includes('description') && character.description) {
-   html += `<p><strong>Description:</strong> ${character.description}</p>`;
+
+    // Ubah output staff dan character ke dalam bentuk array JS di dalam <script>
+    function staff_and_characters_script(data) {
+      // Characters
+      const charArr = (data.characters || []).map(character => ({
+        img: character.image,
+        name: character.name,
+        role: character.role,
+        voice_actors: (character.voiceActors || []).map(va => ({
+          img: va.image,
+          name: va.name,
+          language: va.language
+        }))
+      }));
+      // Staff
+      const staffArr = (data.staff || []).map(staffMember => ({
+        img: staffMember.image,
+        name: staffMember.name,
+        role: staffMember.role
+      }));
+
+      return `<script>
+const CHARACTERS_DATA = ${JSON.stringify(charArr, null, 2)};
+const STAFF_DATA = ${JSON.stringify(staffArr, null, 2)};
+</script>`;
     }
 
-    if (showdata.includes('gender') && character.gender) {
-        html += `<p><strong>Gender:</strong> ${character.gender}</p>`;
-    }
-    if (showdata.includes('age') && character.age) {
-        html += `<p><strong>Age:</strong> ${character.age}</p>`;
-    }
-    if (showdata.includes('dateOfBirth') && character.dateOfBirth) {
-        html += `<p><strong>Date of Birth:</strong> ${character.dateOfBirth}</p>`;
-    }
-    html += `
-        <div class="voice-actors">
-          <h4>Voice Actors:</h4>
-          ${character.voiceActors
-            .filter(va => va.language)
-            .map(va => `
-              <div class="voice-actor">
-                <img src="${va.image}" alt="${va.name}" style="width: 80px; height: auto;" />
-                <p class="va_mame"><strong>${va.name}</strong></p>
-                <p class="va_language">${va.language}</p>
-              </div>
-            `).join('')}
-        </div>
-      </div>
-    `;
-    return html;
-    } 
     postContent = format
     .replace(/{{title}}/g, titleL1? titleL1: titleL2)
     .replace(/{{titleRomaji}}/g, data.title.romaji || 'Unknown')
@@ -470,25 +457,8 @@ const titleL2 = data.title? data.title : data.titleAlternatif.romaji;
   </div>
 `).join('') || 'N/A')
 
-    .replace(/{{staff}}/g, data.staff.map(staffMember => `
-        <div class="staff">
-            <img src="${staffMember.image}" alt="${staffMember.name}" style="width: 100px; height: auto;" />
-            <p><strong>Staff:</strong> ${staffMember.name} - ${staffMember.role}</p>
-        </div>
-    `).join('') || 'N/A') 
-    
-    .replace(/{{characters(?:\(([^)]*)\))?}}/g, (match, p1) => {
-    
-     if (p1){
-   let showdata = p1.split(',').map(item => item.trim()); 
-  if (showdata) {
-    return data.characters.map(character => characters_va_html(character, showdata)).join('') || 'N/A';
-       }
-    }else {
-    let showdata = [];
-    return data.characters.map(character => characters_va_html(character, showdata)).join('') || 'N/A';
-  }
-})    
+    .replace(/{{staff}}/g, staff_and_characters_script(data))
+    .replace(/{{characters(?:\(([^)]*)\))?}}/g, (match, p1) => staff_and_characters_script(data))
     .replace(/{{source}}/g, data.source || 'N/A') .replace(/{{sourceID}}/g, data.sourceID || 'N/A')  
     
     } else if (data.sourceID === 'TMDB') {

@@ -355,3 +355,96 @@ async function mainAnime(url, source, type, callback) {
     console.error('Error fecth:', error);
   }
 }
+
+// Add this at the end of the file
+async function searchAniList(query, type) {
+    const response = await fetch('https://graphql.anilist.co', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            query: `
+                query ($search: String) {
+                    Page(page: 1, perPage: 10) {
+                        media(search: $search, type: ${type}) {
+                            id
+                            title {
+                                romaji
+                                english
+                                native
+                            }
+                            coverImage {
+                                medium
+                            }
+                            format
+                            seasonYear
+                            status
+                        }
+                    }
+                }
+            `,
+            variables: { search: query }
+        })
+    });
+
+    const data = await response.json();
+    return data.data.Page.media;
+}
+
+// Initialize live search
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search-anime');
+    const searchResults = document.getElementById('search-results');
+    const idInput = document.getElementById('id-input');
+    const typeSelect = document.getElementById('type_dataAnime_FectURL');
+    let debounceTimer;
+
+    searchInput.addEventListener('input', async (e) => {
+        clearTimeout(debounceTimer);
+        const query = e.target.value;
+        
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const type = typeSelect.value === 'anilist' ? typeSelect.querySelector(':checked').textContent.toUpperCase() : 'ANIME';
+                const results = await searchAniList(query, type);
+                
+                searchResults.innerHTML = '';
+                results.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'search-result-item';
+                    div.innerHTML = `
+                        <img src="${item.coverImage.medium}" alt="Cover">
+                        <div class="result-info">
+                            <h4>${item.title.english || item.title.romaji}</h4>
+                            <p>${item.format} · ${item.seasonYear || 'N/A'} · ${item.status}</p>
+                        </div>
+                    `;
+                    div.addEventListener('click', () => {
+                        idInput.value = item.id;
+                        searchResults.style.display = 'none';
+                        searchInput.value = item.title.english || item.title.romaji;
+                    });
+                    searchResults.appendChild(div);
+                });
+                
+                searchResults.style.display = results.length > 0 ? 'block' : 'none';
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }, 500); // Debounce delay
+    });
+
+    // Hide results when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+});

@@ -210,6 +210,57 @@ button#post-button::before {
             margin: 0 auto;
         }
 
+    .live-search-container {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+#search-results {
+    position: absolute;
+    width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 1000;
+}
+
+.search-result-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-result-item:hover {
+    background-color: #f5f5f5;
+}
+
+.search-result-item img {
+    width: 50px;
+    height: 70px;
+    object-fit: cover;
+}
+
+.result-info {
+    flex: 1;
+}
+
+.result-info h4 {
+    margin: 0;
+    color: #333;
+}
+
+.result-info p {
+    margin: 5px 0 0;
+    font-size: 0.9em;
+    color: #666;
+}
     </style>
 </head>
 <body>
@@ -276,6 +327,12 @@ button#post-button::before {
         
     </select>
     
+    <div class="live-search-container">
+        <label for="search-anime">Search Anime/Manga:</label>
+        <input type="text" id="search-anime" placeholder="Type at least 2 characters..." autocomplete="off">
+        <div id="search-results"></div>
+    </div>
+
     <label for="id-input">Enter ID:</label>
     <input value="162804" type="text" id="id-input" placeholder="Enter ID from selected platform">
       
